@@ -44,6 +44,7 @@ pipeline {
                 }
                 stage('Build NodeJS') {
                     agent {
+                        label 'dual'
                         docker { image 'node:18-alpine' } // FIX: Use Docker container
                     }
                     steps {
