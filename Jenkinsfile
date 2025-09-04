@@ -5,7 +5,8 @@ pipeline {
 
     environment {
         IMAGE_TAG = "buid-${BUILD_NUMBER}"
-        DOCKER_NETWORK = 'my-app-network'    
+        DOCKER_NETWORK = 'my-app-network'
+        AGENT_PUBLIC_IP = '98.82.1.41'    
     }
 
     stages {
@@ -82,9 +83,9 @@ pipeline {
     post {
         always {
             echo "Deployment completed. Applications are running:"
-            echo "Netflix: http://<EC2_AGENT_IP>:8081"
-            echo "StarBucks: http://<EC2_AGENT_IP>:8082"
-            echo "Node JS: http://<EC2_AGENT_IP>:3000"
+            echo "Netflix: http://${AGENT_PUBLIC_IP}:8081"
+            echo "StarBucks: http://${AGENT_PUBLIC_IP}:8082"
+            echo "Node JS: http://${AGENT_PUBLIC_IP}:3000"
         }
     }
 }
