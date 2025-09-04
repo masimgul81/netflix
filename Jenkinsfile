@@ -70,9 +70,9 @@ pipeline {
                         docker stop netflix starbucks nodejs || true
                         docker rm netflix starbucks nodejs || true
 
-                        docker run -d --name netflix --network ${DCOKER_NETWORK} -p 8081:80 netflix:latest
-                        docker run -d --name starbucks --network ${DCOKER_NETWORK} -p 8082:80 starbucks:latest
-                        docker run -d --name nodejs --network ${DCOKER_NETWORK} -p 3000:3000 nodejs:latest
+                        docker run -d --name netflix --network ${DOCKER_NETWORK} -p 8081:80 netflix:latest
+                        docker run -d --name starbucks --network ${DOCKER_NETWORK} -p 8082:80 starbucks:latest
+                        docker run -d --name nodejs --network ${DOCKER_NETWORK} -p 3000:3000 nodejs:latest
                     """
                 }
             }
