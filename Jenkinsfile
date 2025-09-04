@@ -133,24 +133,24 @@ pipeline {
 
     post {
         always {
-            // Generate build summary
-            sh """
-                echo "Build Number: ${BUILD_NUMBER}" > build-info.txt
-                echo "Image Tag: ${IMAGE_TAG}" >> build-info.txt
-                echo "Build Date: \$(date)" >> build-info.txt
-                echo "Git Commit: \$(git rev-parse HEAD)" >> build-info.txt
-            """
-            archiveArtifacts artifacts: 'build-info.txt', fingerprint: true
+            // // Generate build summary
+            // sh """
+            //     echo "Build Number: ${BUILD_NUMBER}" > build-info.txt
+            //     echo "Image Tag: ${IMAGE_TAG}" >> build-info.txt
+            //     echo "Build Date: \$(date)" >> build-info.txt
+            //     echo "Git Commit: \$(git rev-parse HEAD)" >> build-info.txt
+            // """
+            // archiveArtifacts artifacts: 'build-info.txt', fingerprint: true
 
             echo "Deployment completed. Applications are running:"
             echo "Netflix: http://${AGENT_PUBLIC_IP}:8081"
             echo "StarBucks: http://${AGENT_PUBLIC_IP}:8082"
             echo "Node JS: http://${AGENT_PUBLIC_IP}:3000"
             
-            // Clean up temporary files
-            sh 'rm -f *.tar build-info.txt || true'
-        }
-        success {
+        //     // Clean up temporary files
+        //     sh 'rm -f *.tar build-info.txt || true'
+        // }
+        // success {
             // Additional success actions
             echo "All artifacts created and deployed successfully!"
         }
