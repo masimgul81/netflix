@@ -22,7 +22,7 @@ pipeline {
                 }
             } 
         }
-        stage(Build Docker Images) {
+        stage(Build_Docker_Images) {
             parallel {
                 stage(Netflix) {
                     steps {
@@ -62,7 +62,7 @@ pipeline {
                 }
             }
         }
-        stage(Deploy to Docker) {
+        stage(Deploy_to_Docker) {
             steps {
                 script {
                     sh """
