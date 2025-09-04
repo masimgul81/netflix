@@ -5,7 +5,7 @@ pipeline {
 
     environment {
         IMAGE_TAG = "buid-${BUILD_NUMBER}"
-        DCOKER_NETWORK = 'my-app-network'    
+        DOCKER_NETWORK = 'my-app-network'    
     }
 
     stages {
