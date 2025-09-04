@@ -43,14 +43,15 @@ pipeline {
                     }
                 }
                 stage('Build NodeJS') {
-                    agent {
-                        label 'dual'
-                        docker { image 'node:18-alpine' } // FIX: Use Docker container
-                    }
                     steps {
                         dir('nodejs') {
-                            sh 'npm install'
-                            sh 'npm run build'
+                            // FIX: Use docker.inside instead of nested agent
+                            script {
+                                docker.image('node:18-alpine').inside {
+                                    sh 'npm install'
+                                    sh 'npm run build'
+                                }
+                            }
                             archiveArtifacts artifacts: 'dist/**/*, package.json, package-lock.json', fingerprint: true
                         }
                     }
