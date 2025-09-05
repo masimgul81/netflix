@@ -4,12 +4,12 @@ pipeline {
     environment {
         IMAGE_TAG = "buid-${BUILD_NUMBER}"
         DOCKER_NETWORK = 'my-app-network'
-        AGENT_PUBLIC_IP = '98.82.1.41'    
+        AGENT_PUBLIC_IP = '20.120.98.12'    
     }
 
     stages {
         stage('Checkout') {
-            agent { label 'dual' } // Use any agent with 'dual' label
+            agent { label 'dual' }
             steps {
                 dir('netflix') {
                     git branch: 'main', url: 'https://github.com/masimgul81/netflix.git'
@@ -26,7 +26,7 @@ pipeline {
         stage('Build Projects') {
             parallel {
                 stage('Build Netflix') {
-                    agent { label 'dual' } // Use any agent with 'dual' label
+                    agent { label 'dual' }
                     steps {
                         dir('netflix') {
                             sh 'echo "Building Netflix static content"'
@@ -35,113 +35,48 @@ pipeline {
                     }
                 }
                 stage('Build Starbucks') {
-                    agent { label 'dual' } // Use any agent with 'dual' label
+                    agent { label 'dual' }
                     steps {
                         dir('starbucks') {
                             sh 'echo "Building Starbucks static content"'
-                            archiveArtifacts artifacts: '**/*', fingerprint: true
+                            script {
+                                def files = findFiles(glob: '**/*')
+                                if (files) {
+                                    archiveArtifacts artifacts: '**/*', fingerprint: true
+                                } else {
+                                    echo "No files found to archive in Starbucks"
+                                }
+                            }
                         }
                     }
                 }
                 stage('Build NodeJS') {
-                    agent { label 'dual' } // Use any agent with 'dual' label
+                    agent { label 'dual' }
                     steps {
                         dir('nodejs') {
-                            // FIX: Use docker.inside instead of nested agent
                             script {
-                                docker.image('node:18-alpine').inside {
-                                    sh 'npm install'
-                                    sh 'npm run build'
+                                if (fileExists('package.json')) {
+                                    docker.image('node:18-alpine').inside {
+                                        sh 'npm install'
+                                        sh 'npm run build'
+                                    }
+                                    archiveArtifacts artifacts: 'dist/**/*, package.json, package-lock.json', fingerprint: true
+                                } else {
+                                    error "package.json not found! Files: ${sh(script: 'ls -la', returnStdout: true)}"
                                 }
                             }
-                            archiveArtifacts artifacts: 'dist/**/*, package.json, package-lock.json', fingerprint: true
                         }
                     }
                 }
             }
         }
 
-        stage('Build Docker Images') {
-            parallel {
-                stage('Netflix Image') {
-                    agent { label 'dual' } // Use any agent with 'dual' label
-                    steps {
-                        dir('netflix') {
-                            script {
-                                sh """
-                                    docker build -t netflix:${IMAGE_TAG} .
-                                    docker tag netflix:${IMAGE_TAG} netflix:latest
-                                """
-                            }
-                        }
-                    }
-                }
-                stage('Starbucks Image') {
-                    agent { label 'dual' } // Use any agent with 'dual' label
-                    steps {
-                        dir('starbucks') {
-                            script {
-                                sh """
-                                    docker build -t starbucks:${IMAGE_TAG} .
-                                    docker tag starbucks:${IMAGE_TAG} starbucks:latest
-                                """
-                            }
-                        }
-                    }
-                }
-                stage('NodeJS Image') {
-                    agent { label 'dual' } // Use any agent with 'dual' label
-                    steps {
-                        dir('nodejs') {
-                            script {
-                                sh """
-                                    docker build -t nodejs:${IMAGE_TAG} .
-                                    docker tag nodejs:${IMAGE_TAG} nodejs:latest
-                                """
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Archive Docker Images') {
-            agent { label 'dual' } // Use any agent with 'dual' label
-            steps {
-                script {
-                    sh """
-                        docker save -o netflix-${IMAGE_TAG}.tar netflix:${IMAGE_TAG}
-                        docker save -o starbucks-${IMAGE_TAG}.tar starbucks:${IMAGE_TAG}
-                        docker save -o nodejs-${IMAGE_TAG}.tar nodejs:${IMAGE_TAG}
-                    """
-                    archiveArtifacts artifacts: '*.tar', fingerprint: true
-                }
-            }
-        }
-
-        stage('Deploy to Docker') {
-            agent { label 'dual' } // Use any agent with 'dual' label
-            steps {
-                script {
-                    sh """
-                        docker network inspect ${DOCKER_NETWORK} >/dev/null 2>&1 || docker network create ${DOCKER_NETWORK}
-                        docker stop netflix starbucks nodejs || true
-                        docker rm netflix starbucks nodejs || true
-
-                        docker run -d --name netflix --network ${DOCKER_NETWORK} -p 8081:80 netflix:latest
-                        docker run -d --name starbucks --network ${DOCKER_NETWORK} -p 8082:80 starbucks:latest
-                        docker run -d --name nodejs --network ${DOCKER_NETWORK} -p 3000:3000 nodejs:latest
-                    """
-                }
-            }
-        }
+        // ... keep the rest of your stages the same ...
     }
 
     post {
         always {
-            agent { label 'dual' } // Use any agent with 'dual' label
-            steps {
-                script {
+            // REMOVE THE 'steps' BLOCK - put commands directly here
             sh """
                 echo "Build Number: ${BUILD_NUMBER}" > build-info.txt
                 echo "Image Tag: ${IMAGE_TAG}" >> build-info.txt
@@ -156,8 +91,6 @@ pipeline {
             echo "Node JS: http://${AGENT_PUBLIC_IP}:3000"
             
             sh 'rm -f *.tar build-info.txt || true'
-            }
         }
     }
-}
 }
