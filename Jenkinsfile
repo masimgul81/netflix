@@ -6,7 +6,7 @@ pipeline {
     environment {
         IMAGE_TAG = "buid-${BUILD_NUMBER}"
         DOCKER_NETWORK = 'my-app-network'
-        AGENT_PUBLIC_IP = '98.82.1.41'    
+        AGENT_PUBLIC_IP = '74.235.29.140'    
     }
 
     stages {
