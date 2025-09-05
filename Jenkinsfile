@@ -104,19 +104,19 @@ pipeline {
             }
         }
 
-        // stage('Archive Docker Images') {
-        //     agent { label 'dual' }
-        //     steps {
-        //         script {
-        //             sh """
-        //                 docker save -o netflix-${IMAGE_TAG}.tar netflix:${IMAGE_TAG}
-        //                 docker save -o starbucks-${IMAGE_TAG}.tar starbucks:${IMAGE_TAG}
-        //                 docker save -o nodejs-${IMAGE_TAG}.tar nodejs:${IMAGE_TAG}
-        //             """
-        //             archiveArtifacts artifacts: '*.tar', fingerprint: true
-        //         }
-        //     }
-        // }
+        stage('Archive Docker Images') {
+            agent { label 'dual' }
+            steps {
+                script {
+                    sh """
+                        docker save -o netflix-${IMAGE_TAG}.tar netflix:${IMAGE_TAG}
+                        docker save -o starbucks-${IMAGE_TAG}.tar starbucks:${IMAGE_TAG}
+                        docker save -o nodejs-${IMAGE_TAG}.tar nodejs:${IMAGE_TAG}
+                    """
+                    archiveArtifacts artifacts: '*.tar', fingerprint: true
+                }
+            }
+        }
 
         stage('Deploy to Docker') {
             agent { label 'dual' }
