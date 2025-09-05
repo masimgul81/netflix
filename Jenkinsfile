@@ -78,7 +78,7 @@ pipeline {
     //     always {
     //         // REMOVE THE 'steps' BLOCK - put commands directly here
     //         sh """
-    //             echo "Build Number: ${BUILD_NUMBER}" > build-info.txt
+    //             echo "Build Numbers: ${BUILD_NUMBER}" > build-info.txt
     //             echo "Image Tag: ${IMAGE_TAG}" >> build-info.txt
     //             echo "Build Date: \$(date)" >> build-info.txt
     //             echo "Git Commit: \$(git rev-parse HEAD)" >> build-info.txt
