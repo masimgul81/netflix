@@ -74,22 +74,22 @@ pipeline {
         // ... keep the rest of your stages the same ...
     }
 
-    post {
-        always {
-            // REMOVE THE 'steps' BLOCK - put commands directly here
-            sh """
-                echo "Build Number: ${BUILD_NUMBER}" > build-info.txt
-                echo "Image Tag: ${IMAGE_TAG}" >> build-info.txt
-                echo "Build Date: \$(date)" >> build-info.txt
-                echo "Git Commit: \$(git rev-parse HEAD)" >> build-info.txt
-            """
-            // archiveArtifacts artifacts: 'build-info.txt', fingerprint: true
+    // post {
+    //     always {
+    //         // REMOVE THE 'steps' BLOCK - put commands directly here
+    //         sh """
+    //             echo "Build Number: ${BUILD_NUMBER}" > build-info.txt
+    //             echo "Image Tag: ${IMAGE_TAG}" >> build-info.txt
+    //             echo "Build Date: \$(date)" >> build-info.txt
+    //             echo "Git Commit: \$(git rev-parse HEAD)" >> build-info.txt
+    //         """
+    //         // archiveArtifacts artifacts: 'build-info.txt', fingerprint: true
 
-            // echo "Deployment completed. Applications are running:"
-            // echo "Netflix: http://${AGENT_PUBLIC_IP}:8081"
-            // echo "StarBucks: http://${AGENT_PUBLIC_IP}:8082"
-            // echo "Node JS: http://${AGENT_PUBLIC_IP}:3000"
+    //         // echo "Deployment completed. Applications are running:"
+    //         // echo "Netflix: http://${AGENT_PUBLIC_IP}:8081"
+    //         // echo "StarBucks: http://${AGENT_PUBLIC_IP}:8082"
+    //         // echo "Node JS: http://${AGENT_PUBLIC_IP}:3000"
             
-            // sh 'rm -f *.tar build-info.txt || true'
-        }
-    }
+    //         // sh 'rm -f *.tar build-info.txt || true'
+    //     }
+    // }
