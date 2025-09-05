@@ -1,10 +1,10 @@
 pipeline {
-    agent none // No global agent - we'll specify per stage
+    agent none
 
     environment {
         IMAGE_TAG = "buid-${BUILD_NUMBER}"
         DOCKER_NETWORK = 'my-app-network'
-        AGENT_PUBLIC_IP = '20.120.98.12'    
+        AGENT_PUBLIC_IP = '98.82.1.41'    
     }
 
     stages {
@@ -26,7 +26,7 @@ pipeline {
         stage('Build Projects') {
             parallel {
                 stage('Build Netflix') {
-                    agent { label 'dual' } // Jenkins will choose an available agent
+                    agent { label 'dual' } // Use any agent with 'dual' label
                     steps {
                         dir('netflix') {
                             sh 'echo "Building Netflix static content"'
@@ -35,7 +35,7 @@ pipeline {
                     }
                 }
                 stage('Build Starbucks') {
-                    agent { label 'dual' } // Could run on a different agent
+                    agent { label 'dual' } // Use any agent with 'dual' label
                     steps {
                         dir('starbucks') {
                             sh 'echo "Building Starbucks static content"'
@@ -44,9 +44,10 @@ pipeline {
                     }
                 }
                 stage('Build NodeJS') {
-                    agent { label 'dual' } // Could run on a different agent
+                    agent { label 'dual' } // Use any agent with 'dual' label
                     steps {
                         dir('nodejs') {
+                            // FIX: Use docker.inside instead of nested agent
                             script {
                                 docker.image('node:18-alpine').inside {
                                     sh 'npm install'
@@ -63,7 +64,7 @@ pipeline {
         stage('Build Docker Images') {
             parallel {
                 stage('Netflix Image') {
-                    agent { label 'dual' }
+                    agent { label 'dual' } // Use any agent with 'dual' label
                     steps {
                         dir('netflix') {
                             script {
@@ -76,7 +77,7 @@ pipeline {
                     }
                 }
                 stage('Starbucks Image') {
-                    agent { label 'dual' }
+                    agent { label 'dual' } // Use any agent with 'dual' label
                     steps {
                         dir('starbucks') {
                             script {
@@ -89,7 +90,7 @@ pipeline {
                     }
                 }
                 stage('NodeJS Image') {
-                    agent { label 'dual' }
+                    agent { label 'dual' } // Use any agent with 'dual' label
                     steps {
                         dir('nodejs') {
                             script {
@@ -105,7 +106,7 @@ pipeline {
         }
 
         stage('Archive Docker Images') {
-            agent { label 'dual' }
+            agent { label 'dual' } // Use any agent with 'dual' label
             steps {
                 script {
                     sh """
@@ -119,7 +120,7 @@ pipeline {
         }
 
         stage('Deploy to Docker') {
-            agent { label 'dual' }
+            agent { label 'dual' } // Use any agent with 'dual' label
             steps {
                 script {
                     sh """
@@ -138,22 +139,23 @@ pipeline {
 
     post {
         always {
-            agent { label 'dual' }
+            agent { label 'dual' } // Use any agent with 'dual' label
             steps {
-                sh """
-                    echo "Build Number: ${BUILD_NUMBER}" > build-info.txt
-                    echo "Image Tag: ${IMAGE_TAG}" >> build-info.txt
-                    echo "Build Date: \$(date)" >> build-info.txt
-                    echo "Git Commit: \$(git rev-parse HEAD)" >> build-info.txt
-                """
-                archiveArtifacts artifacts: 'build-info.txt', fingerprint: true
+                script {
+            sh """
+                echo "Build Number: ${BUILD_NUMBER}" > build-info.txt
+                echo "Image Tag: ${IMAGE_TAG}" >> build-info.txt
+                echo "Build Date: \$(date)" >> build-info.txt
+                echo "Git Commit: \$(git rev-parse HEAD)" >> build-info.txt
+            """
+            archiveArtifacts artifacts: 'build-info.txt', fingerprint: true
 
-                echo "Deployment completed. Applications are running:"
-                echo "Netflix: http://${AGENT_PUBLIC_IP}:8081"
-                echo "StarBucks: http://${AGENT_PUBLIC_IP}:8082"
-                echo "Node JS: http://${AGENT_PUBLIC_IP}:3000"
-                
-                sh 'rm -f *.tar build-info.txt || true'
+            echo "Deployment completed. Applications are running:"
+            echo "Netflix: http://${AGENT_PUBLIC_IP}:8081"
+            echo "StarBucks: http://${AGENT_PUBLIC_IP}:8082"
+            echo "Node JS: http://${AGENT_PUBLIC_IP}:3000"
+            
+            sh 'rm -f *.tar build-info.txt || true'
             }
         }
     }
