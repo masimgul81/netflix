@@ -1,0 +1,48 @@
+name: Build and Update Config Repo
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout App Code
+      uses: actions/checkout@v3
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          g3nius/myflix:latest
+          g3nius/myflix:${{ github.sha }}
+
+    - name: Update ArgoCD Manifests
+      run: |
+        # 1. Configure Git with the PAT
+        git config --global user.email "ci-bot@example.com"
+        git config --global user.name "CI Bot"
+        
+        # 2. Clone the GitOps Repo (argocd-lab) using the PAT
+        # REPLACE 'masimgul81' with your username
+        git clone https://${{ secrets.API_TOKEN_GITHUB }}@github.com/masimgul81/argocd-lab.git
+        
+        cd argocd-lab
+        
+        # 3. Update the YAML
+        # Assumes deployment.yaml is in 'my-app' folder
+        sed -i "s|image: g3nius/myflix:.*|image: g3nius/myflix:${{ github.sha }}|g" my-app/deployment.yaml
+        
+        # 4. Commit and Push back to argocd-lab
+        git add my-app/deployment.yaml
+        git commit -m "CI: Update image tag to ${{ github.sha }}"
+        git push origin main
