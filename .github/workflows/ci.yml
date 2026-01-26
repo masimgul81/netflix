@@ -23,8 +23,8 @@ jobs:
         context: .
         push: true
         tags: |
-          g3nius/myflix:latest
-          g3nius/myflix:${{ github.sha }}
+          g3niuz/myflix:latest
+          g3niuz/myflix:${{ github.sha }}
 
     - name: Update ArgoCD Manifests
       run: |
@@ -40,7 +40,7 @@ jobs:
         
         # 3. Update the YAML
         # Assumes deployment.yaml is in 'my-app' folder
-        sed -i "s|image: g3nius/myflix:.*|image: g3nius/myflix:${{ github.sha }}|g" my-app/deployment.yaml
+        sed -i "s|image: g3niuz/myflix:.*|image: g3niuz/myflix:${{ github.sha }}|g" my-app/deployment.yaml
         
         # 4. Commit and Push back to argocd-lab
         git add my-app/deployment.yaml
