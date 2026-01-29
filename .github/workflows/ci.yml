@@ -1,15 +1,19 @@
-name: Build and Update Config Repo
+name: DevSecOps Build & Deploy
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  build-secure-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout App Code
+    - name: Checkout Code
       uses: actions/checkout@v3
+
+    # 1. Initialize Docker Buildx (Required for local caching/scanning)
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
 
     - name: Login to Docker Hub
       uses: docker/login-action@v2
@@ -17,32 +21,40 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build and Push Docker Image
+    # 2. Build the image LOCALLY first (load it so Trivy can see it)
+    - name: Build and Export to Docker
       uses: docker/build-push-action@v4
       with:
         context: .
-        push: true
-        tags: |
-          g3niuz/myflix:latest
-          g3niuz/myflix:${{ github.sha }}
+        load: true   # <--- Important: Loads image into local Docker daemon instead of pushing
+        tags: g3niuz/myflix:${{ github.sha }}
 
+    # 3. Scan the Image with Trivy
+    - name: Run Trivy Vulnerability Scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'g3niuz/myflix:${{ github.sha }}'
+        format: 'table'
+        exit-code: '1'        # <--- Fail the pipeline if vulnerabilities are found
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        severity: 'CRITICAL,HIGH' # <--- Only fail on High/Critical issues
+
+    # 4. If Scan Passes, Push the Image to Hub
+    - name: Push Docker Image
+      run: |
+        docker push g3niuz/myflix:${{ github.sha }}
+        docker tag g3niuz/myflix:${{ github.sha }} g3niuz/myflix:latest
+        docker push g3niuz/myflix:latest
+
+    # 5. Update the Config Repo (GitOps)
     - name: Update ArgoCD Manifests
       run: |
-        # 1. Configure Git with the PAT
         git config --global user.email "ci-bot@example.com"
         git config --global user.name "CI Bot"
-        
-        # 2. Clone the GitOps Repo (argocd-lab) using the PAT
-        # REPLACE 'masimgul81' with your username
         git clone https://${{ secrets.API_TOKEN_GITHUB }}@github.com/masimgul81/argocd-lab.git
-        
         cd argocd-lab
-        
-        # 3. Update the YAML
-        # Assumes deployment.yaml is in 'my-app' folder
         sed -i "s|image: g3niuz/myflix:.*|image: g3niuz/myflix:${{ github.sha }}|g" my-app/deployment.yaml
-        
-        # 4. Commit and Push back to argocd-lab
         git add my-app/deployment.yaml
-        git commit -m "CI: Update image tag to ${{ github.sha }}"
+        git commit -m "Secured CI: Update image tag to ${{ github.sha }}"
         git push origin main
